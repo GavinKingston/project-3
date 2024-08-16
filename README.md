@@ -1,6 +1,6 @@
 # Digital Gangsters
 
-# Member
+# Members
 Nicholas Major, Gavin Kingston, Philip Schrank, Joe Middleton
 
 # High-Level Goal
