@@ -1,0 +1,7 @@
+pandas
+yolov8
+gradio
+scikit-learn
+keras
+tensorflow
+numpy
