@@ -34,7 +34,7 @@ def predict(model, target_size, labels):
         if max_val > 0.5:
             output_message = f"The image contains a {first_weapon} with a confidence of {'{:,.2%}'.format(max_val)}."
         
-        if second_max_val > 0.3:
+        if second_max_val > 0.3 and second_max_val < max_val:
             output_message = output_message + f"\nThe image could also be a {second_weapon} with a confidence of {'{:,.2%}'.format(second_max_val)}"
         
         return output_message
