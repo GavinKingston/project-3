@@ -23,20 +23,32 @@ def predict(model, target_size, labels):
         normalized_img = float_img/255
         expanded_img = np.expand_dims(normalized_img, axis=0)
         prediction = model.predict(expanded_img)
-        max_arg = tf.argmax(prediction, axis=1)
-        max_index = max_arg.numpy()[0]
-        weapon_name = labels[max_index]
-        confidence = tf.gather(prediction[0], max_index).numpy()
-        if confidence > 0.5:
-            return f"The image contains a {weapon_name} with a confidence of {'{:,.2%}'.format(confidence)}"
+        pred_copy = prediction[0].copy()
+        max_val = np.sort(pred_copy)[-1]
+        second_max_val = np.sort(pred_copy)[-2]
+        max_idx = np.where(pred_copy == max_val)[0][0]
+        second_max_idx = np.where(pred_copy == second_max_val)[0][0]
+        first_weapon = labels[max_idx]
+        second_weapon = labels[second_max_idx]
+        output_message = "No weapon detected in the image"
+        if max_val > 0.5:
+            output_message = f"The image contains a {first_weapon} with a confidence of {'{:,.2%}'.format(max_val)}."
         
-        return "No weapon detected in the image"
+        if second_max_val > 0.3:
+            output_message = output_message + f"\nThe image could also be a {second_weapon} with a confidence of {'{:,.2%}'.format(second_max_val)}"
+        
+        return output_message
     demo = gr.Interface(run_model, gr.Image(type="pil"), gr.Textbox())
     demo.launch()
 
 if __name__ == '__main__':
-    pkl_model = "./pew_pew_pew_model.pkl"
-    with open(pkl_model, 'rb') as file:
-        model = pickle.load(file)
+    print(pickle.format_version)
+    # load model to use
+    #model_pkl = 'binary_model.pkl'
+    model_pkl = 'pew_pew_pew_model.pkl'
+    # to load in    
+    #load model from pickle file
+    with open(model_pkl, 'rb') as file:  
+        model = pickle.load(file)  
         
     predict(model, (64, 60), l)
