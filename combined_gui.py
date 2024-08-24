@@ -4,14 +4,21 @@ import gradio as gr
 from PIL import Image
 import pickle
 
+# Load weapon classification model
 weapon_model_pkl = './models/pew_pew_pew_model.pkl'
 with open(weapon_model_pkl,'rb') as file:
     model_2 = pickle.load(file)  
-    
+
+# Set weapon_list binary
+weapon_list = [1,0]
+
+# Create Gradio classifier
 theme = gr.themes.Soft(
     primary_hue="stone",
     secondary_hue="sky",
 )
+
+# initiate gradio with theme
 
 with gr.Blocks(theme=theme) as demo:
     ...
@@ -35,7 +42,8 @@ Args:
         max_arg = tf.argmax(prediction, axis=1)
         max_index = max_arg.numpy()[0]
         weapon_name = labels[max_index]
-        print(weapon_name)
+        
+        # create classifications for if there is a weapon in the image or not
         if weapon_name == 1:
             ## load model to use
             labels = ['Automatic Rifle', 'Bazooka', 'Grenade Launcher', 'Handgun', 'Knife', 'Shotgun', 'SMG', 'Sniper', 'Sword']
