@@ -4,7 +4,7 @@ import gradio as gr
 from PIL import Image
 import pickle
 
-weapon_model_pkl = 'pew_pew_pew_model.pkl'
+weapon_model_pkl = './models/pew_pew_pew_model.pkl'
 with open(weapon_model_pkl,'rb') as file:
     model_2 = pickle.load(file)  
     
