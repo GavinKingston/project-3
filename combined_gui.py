@@ -2,15 +2,11 @@ import tensorflow as tf
 import numpy as np
 import gradio as gr
 from PIL import Image
-import pickle
+
 import time
 import cv2
-import keras
+
 # Load weapon classification model
-#weapon_model_pkl = tf.keras.models.load_model('./models/pew_pew_pew_model.pkl')
-#with open(weapon_model_pkl,'rb') as file:
-#    model_2 = pickle.load(file)  
-#model_2 = keras.layers.TFSMLayer('../models/pew_pew_pew_model.pkl', call_endpoint='serving_default')
 model_2 = tf.keras.models.load_model('./models/pew_pew_pew_model.keras')#pickle.load(file)  
 
 # Set weapon_list binary
