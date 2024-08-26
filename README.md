@@ -7,13 +7,18 @@ Nicholas Major, Gavin Kingston, Philip Schrank, Joe Middleton
 Our goal is to create a Convolutional Neural Network (CNN) specifically designed to classify images of weapons. This model is optimized for integration with OpenCV, enabling real-time analysis of videos and live security feeds. By leveraging this technology, we aim to enhance threat detection capabilities and proactively mitigate potential security risks.
 
 # Dataset and Resources
-[metadata.csv](https://github.com/GavinKingston/project-3/blob/Major/Resources/metadata.csv) 
+[metadata.csv](https://github.com/GavinKingston/project-3/blob/Major/Resources/metadata.csv) :
 
 Weapon Detection Dataset: https://dasci.es/transferencia/open-data/24705/
 
 Weapon Detection for Security and Video Surveillance: https://sci2s.ugr.es/weapons-detection
 
-[train.csv](https://github.com/GavinKingston/project-3/blob/Major/Resources/dataset/train.csv)
+[train.csv](https://github.com/GavinKingston/project-3/blob/Major/Resources/dataset/train.csv) :
+
+https://www.kaggle.com/datasets/ezzzio/random-images
+
+https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html
+
 
 # Data Preparation 
 Two datasets were imported: one containing metadata of weapon images and another with general images. The metadata files were processed to extract relevant labels and IDs.  All images were loaded from the specified directories, converted to RGB format, and cleaned to ensure only valid images were included.
@@ -33,7 +38,46 @@ The model was compiled with the RMSProp optimizer and binary cross-entropy loss 
 # Model Saving
 The trained model was serialized and saved as a pickle file (binary_model.pkl). This allows the model to be loaded and used for inference in future applications.
 
+# Classification Model
+![Classification model](https://github.com/GavinKingston/project-3/blob/Major/presentation%20images/classification_model.png)
 
+# Evaluation Loss vs. Iterations
+![Evaluation loss vs iterations](https://github.com/GavinKingston/project-3/blob/Major/presentation%20images/Screenshot%20(331).png)
+
+# Epoch Accuracy
+![Epoch Accuracy](https://github.com/GavinKingston/project-3/blob/Major/presentation%20images/epoch_accuracy.png)
+
+# Epoch Loss
+![Epoch Loss](https://github.com/GavinKingston/project-3/blob/Major/presentation%20images/epoch_loss.png)
+
+# Instructions
+1. Install the requirements
+
+2. Run main.ipynb file
+
+3. Upload image when prompted
+
+
+# Requirements
+tensorflow 
+
+numpy 
+
+gradio 
+
+pillow
+
+opencv-python
+
+scikit-learn
+
+pandas
+
+datetime
+
+# License
+
+[CCO: Public Domain](https://creativecommons.org/publicdomain/zero/1.0/)
 
 
 
