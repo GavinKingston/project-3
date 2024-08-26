@@ -7,26 +7,16 @@ import tensorflow as tf
 import gradio as gr
 import PIL
 from sklearn.preprocessing import OneHotEncoder
+import os
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+import pickle
 
-target_size = (128, 128)
 
 def preprocess_data(data):
-
     # Add columns for weapon type and weapon id based on the filename
     data[["weapon_type", "weapon_id"]] = data["labelfile"].str.replace(r"\..*$", "", regex=True).str.split("_", expand=True)
-    data = data.loc[data['train_id'] == 1].copy().head(5)
+    data = data.loc[data['train_id'] == 1].copy()
     data.reset_index(drop=True, inplace=True)
-    
-    # Get all of the images
-    images = [open_image(x) for x in data["imagefile"]]
-    
-    # get the most common size of images and resize all images to that size
-    target_size = get_most_common_size(images) 
-
-    data["image"] = [process_image(image, target_size) for image in images]
-   # data["image"] = images.apply(lambda x: process_image(x, target_size))
-
-
     return data
 
 def open_image(image):
@@ -38,76 +28,56 @@ def open_image(image):
     except Exception as e:
         print(f"Error opening image {image_path}: {e}")
 
-def get_most_common_size(images):
-    sizes = [image.size for image in images]
-    size_counts = pd.Series(sizes).value_counts()
-    target_size = size_counts.idxmax()
-    return target_size
-
-def process_image(image, target_size):
+def process_image(image):
+    image = image.resize((128, 128))  # Resize image to 128x128
+    image = image.convert('RGB')  # Convert to RGB
+    return np.array(image)
     
-    # Convert the image to RGB if it is not
-    if image.mode != 'RGB':
-       image = image.convert('RGB')
+def augment_images(images, labels, n_augmentations=10):
 
-    #resize the image
-    resized_image = image.resize(target_size, resample = Image.LANCZOS)
-    resized_image = np.expand_dims(resized_image, axis=0)
-    #convert the image to a numpy array
-    #resized_image = np.array(resized_image).astype(np.float32)
+    # create an ImageDataGenerator object to augment the images
+    datagen = ImageDataGenerator(
+        rotation_range=20,
+        width_shift_range=0.2,
+        height_shift_range=0.2,
+        shear_range=0.2,
+        zoom_range=0.2,
+        horizontal_flip=True,
+        fill_mode='nearest'
+    )
 
-    #normalize the image
-    resized_image = resized_image / 255.0
-    
-    return resized_image
-
-def augment_images(data):
-    X = [open_image(i) for i in data["imagefile"]]
-    y= data["weapon_type"]
-    
-    # Convert list of images to numpy array with the correct shape
-    #X_train_processed = np.array([np.array(x) for x in X])
-    #X_train_processed = [np.expand_dims(x, axis=-1) for x in X]
-
-    #print(f"X_train_processed: {X_train_processed}")
-
-    common_size = get_most_common_size(X)
-
-    data_augmentation = tf.keras.Sequential([
-        tf.keras.layers.RandomRotation(0.2),         # Random rotation (20 degrees)
-        tf.keras.layers.RandomTranslation(0.1, 0.1), # Random horizontal and vertical shift
-        tf.keras.layers.RandomZoom(0.2),             # Random zoom
-        tf.keras.layers.RandomFlip('horizontal')     # Random horizontal flip
-    ])
-
+    # setup empty lists to store the augmented images and labels and a counter to keep track of how many augmented images we have created
     X_aug = []
     y_aug = []
-
-    y_train_aug = pd.DataFrame(columns=y_processed_df.columns)
+    counter = 0
 
     # loop through the training set and augment the images
-    for i in range(len(X)):
-        # augment 10 more images for each image in the training set
+    for i in range(images.shape[0]):
         print(f"Augmenting image {i}")
-        #i = np.expand_dims(i, axis=0)  
-        for j in range(1):
-            print(f"Augmenting image {i} - {j}")
-            augmented_image = process_image(X[i], common_size) 
-            augmented_image = data_augmentation(augmented_image, training=True)[0].numpy()
+        img = images[i].reshape((1, 128, 128, 3))
+        label = labels[i]
 
+        # loop through the augmented images and add them to the list
+        for aug_img in datagen.flow(img, batch_size=1):
+            counter += 1
+            print(f"Augmenting image {i} - {counter}")
+            X_aug.append(aug_img[0])
+            y_aug.append(label)
+            
+            # break the loop if we have created the specified number of augmented images
+            if counter == n_augmentations:
+                counter = 0
+                break
 
-            # Resize the augmented image due to zooming
-            #global target_size
-            #resized_image = tf.image.resize(augmented_image, target_size)
-            print(f"augmented_image shape: {augmented_image.shape}")
+        # add the original image to the list
+        X_aug.append(img[0])
+        y_aug.append(label)
 
-            #X_train_aug.append(resized_image.numpy())
-            X_aug.append(augmented_image)
-            y_aug.append(y[i])
-        X_aug.append(process_image(X[i], common_size))
-        y_aug.append(y[i])
+        # convert the augmented images and labels to numpy arrays
+        augmented_images = np.array(X_aug)
+        augmented_labels = np.array(y_aug)
 
-    return X_aug, y_aug
+    return augmented_images, augmented_labels
 
 def process_frame(image):
     # Preprocess the image to match the input format of your model
@@ -124,54 +94,12 @@ def process_frame(image):
 
     return predicted_class
 
-def one_hot_encode(y):
-    print(f"one_hot_encode y shape: {np.array(y).shape}")
-    print(f"one_hot_encode y: {y[0]}")
-
-    encoder = OneHotEncoder(sparse_output=False)
-    #y_encoded = encoder.fit_transform(y.values.reshape(-1, 1))
-    y_encoded = encoder.fit_transform(np.array(y).reshape(-1, 1))
-    columns = encoder.get_feature_names_out(["weapon_type"])
-    y = pd.DataFrame(y_encoded, columns=columns)
-    print(f"one hot encoded y shape result: {y.shape}")
-    return y, encoder
-
-
-def train_model(X, y):
-
-    print(f"X: {X}")
-    X = np.array(X)
-    print(f"X type: {X.type}")
-    print(f"y type: {y.type}")
-
-    # Convert list of images to numpy array with the correct shape
-    X = [np.array(x) for x in X]
-    y = np.array(y.values)
-
-    print(f"X shape: {X.shape}")
-    print(f"y shape: {y.shape}")
-    #for img in X.values:
-    #    print(f"img shape: {img.shape}")
-    #print(f"X type: {type(X)}")
-    #X_arr = np.concatenate(X, axis=0)
-
+def train_model(X, y, encoder):
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-    print(f"y_train shape: {y_train.shape}")
-    print(f"X_train shape: {X_train.shape}")
-    print(f"y_train shape: {y_train.shape}")
-
-#    print(f"X_train: {X_train[0]}")
-#    print(f"y_train: {y_train[0]}")
-
-    print(f"X_train length: {len(X_train)}")
-    print(f"y_train length: {len(y_train)}")
-
-   # print(f"X_test dtype: {X_train[0].dtype}")
-    print(f"X_train full dtype: {X_train.dtype}")
-    #print(f"y_test dtype: {y_train[0].dtype}")
-    print(f"y_train full dtype: {y_train.dtype}")
+    X_train = X_train / 255.0
+    X_test = X_test / 255.0
 
     model = tf.keras.Sequential([
         tf.keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=X_train[0].shape),
@@ -181,7 +109,7 @@ def train_model(X, y):
         tf.keras.layers.Conv2D(64, (3, 3), activation='relu'),
         tf.keras.layers.Flatten(),
         tf.keras.layers.Dense(64, activation='relu'),
-        tf.keras.layers.Dense(9, activation='softmax')
+        tf.keras.layers.Dense(len(encoder.categories_[0]), activation='softmax')
     ])
 
     model.compile(optimizer='adam',
@@ -198,43 +126,63 @@ def load_model():
     model = tf.keras.models.load_model('./Resources/weapon_detection_model.keras')
     return model
 
-def gradio_input_fn(data):
-    global target_size
-    data = process_image(data, target_size)
-    model = load_model()
-    prediction = model.predict(data)
-    return prediction
+def gradio_input_fn(image, encoder, model):
+    image = process_image(image)
+    image = image.reshape((1, 128, 128, 3))
+    image = image / 255.0
+    predictions = model.predict(image)
+    prediction = encoder.inverse_transform(predictions)[0][0]
+    confidence_score = predictions[0][np.argmax(predictions)]
+    print(f"Prediction: {prediction} with an accuracy of {confidence_score}")
+    return f"{prediction} with an accuracy of {confidence_score}"
 
+def load_images(image_paths):
+    images = [process_image(open_image(image_path)) for image_path in image_paths]
+    #image_paths = image_paths.apply(lambda x: os.path.join('./Resources/weapon_detection/train/images/', x))
+    #images = []
+    #for img_path in image_paths:
+    #    img = process_image(Image.open(img_path))
+    #    images.append(img)
+    return np.array(images)
 
+def build_encoder(y):
+    encoder = OneHotEncoder(sparse_output=False)
+    y_encoded = encoder.fit_transform(y.values.reshape(-1, 1))
+    with open('./Resources/encoder.pkl', 'wb') as f:
+        pickle.dump(encoder, f)
+    return y_encoded, encoder
+
+def load_encoder():
+    if not os.path.exists('./Resources/encoder.pkl'):
+        return None
+    with open('./Resources/encoder.pkl', 'rb') as f:
+        encoder = pickle.load(f)
+    return encoder
 
 if __name__ == '__main__':
 
-    # Load the data
-    data = pd.read_csv('./Resources/metadata.csv')
+    if not os.path.exists('./Resources/weapon_detection_model.keras') or not os.path.exists('./Resources/encoder.pkl'):
+        print("Model or Encoder not found. Training model and encoder...")
 
-    # Preprocess the data to gather labels and process image data
-    data = preprocess_data(data)
+        # Load the data
+        data = pd.read_csv('./Resources/metadata.csv')
+        
+        # Preprocess the data to gather labels and process image data
+        data = preprocess_data(data)
+        
+        images = load_images(data["imagefile"])
+        y_encoded, encoder = build_encoder(data["weapon_type"])
 
-    # One hot encode the labels
-    y, encoder = one_hot_encode(data['weapon_type'])
+        images, labels = augment_images(images, y_encoded, 50)
 
-    # Augment more images from existing images
-    X, y = augment_images(data)
+        # Train the model
+        model = train_model(images, labels, encoder)
+    else:
+        model = load_model()
+        encoder = load_encoder()
 
-#    print(f"X_train_aug: {X_train_aug}")
-    # Concatenate the original and augmented images
-    #print(f"x_train_aug: {X_train_aug.shape}")
-    #print(f"X_train: {data['image'].shape}")
-    #X = X_train_aug + data["image"]
-    #y = y_train_aug + y
 
-#    print(f"X: {X}")
-#    print(f"y: {y}")
-
-    # Train the model
-    model = train_model(X, y)
-
-    #gr.Interface(fn=gradio_input_fn, inputs=gr.Image(label="Image", type="pil"), outputs=gr.Textbox(label="Weapon Type")).launch()
+    gr.Interface(fn=lambda input_data: gradio_input_fn(input_data, encoder, model), inputs=gr.Image(label="Image", type="pil"), outputs=gr.Textbox(label="Weapon Type")).launch()
 
 #    model = train_model(data)
 
