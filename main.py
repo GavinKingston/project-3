@@ -62,9 +62,8 @@ def process_image(image, target_size):
     return resized_image
 
 def augment_images(data):
-    #X = data["image"]
-    X_train_processed = data["image"]
-    y_train = data["target"]
+    X = [open_image(i) for i in data["imagefile"]]
+    y= data["target"]
     
     # Convert list of images to numpy array with the correct shape
     #X_train_processed = np.array([np.array(x) for x in X])
@@ -79,17 +78,17 @@ def augment_images(data):
         tf.keras.layers.RandomFlip('horizontal')     # Random horizontal flip
     ])
 
-    X_train_aug = []
-    y_train_aug = []
+    X_aug = []
+    y_aug = []
 
     # loop through the training set and augment the images
-    for i in range(len(X_train_processed)):
+    for i in range(len(X)):
         # augment 10 more images for each image in the training set
         print(f"Augmenting image {i}")
         #i = np.expand_dims(i, axis=0)  
         for j in range(1):
             print(f"Augmenting image {i} - {j}")
-            augmented_image = data_augmentation(X_train_processed[i], training=True)[0].numpy()
+            augmented_image = data_augmentation(X[i], training=True)[0].numpy()
 
             # Resize the augmented image due to zooming
             #global target_size
@@ -188,7 +187,7 @@ if __name__ == '__main__':
     data = preprocess_data(data)
 
     # Augment more images from existing images
-    #X_train_aug, y_train_aug = augment_images(data)
+    X, y = augment_images(data)
     y, encoder = one_hot_encode(data["weapon_type"])
 
 #    print(f"X_train_aug: {X_train_aug}")
