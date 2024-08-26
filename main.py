@@ -14,7 +14,7 @@ def preprocess_data(data):
 
     # Add columns for weapon type and weapon id based on the filename
     data[["weapon_type", "weapon_id"]] = data["labelfile"].str.replace(r"\..*$", "", regex=True).str.split("_", expand=True)
-    data = data.loc[data['train_id'] == 1].copy()
+    data = data.loc[data['train_id'] == 1].copy().head(5)
     data.reset_index(drop=True, inplace=True)
     
     # Get all of the images
@@ -52,9 +52,9 @@ def process_image(image, target_size):
 
     #resize the image
     resized_image = image.resize(target_size, resample = Image.LANCZOS)
-
+    resized_image = np.expand_dims(resized_image, axis=0)
     #convert the image to a numpy array
-    resized_image = np.array(resized_image).astype(np.float32)
+    #resized_image = np.array(resized_image).astype(np.float32)
 
     #normalize the image
     resized_image = resized_image / 255.0
@@ -63,13 +63,15 @@ def process_image(image, target_size):
 
 def augment_images(data):
     X = [open_image(i) for i in data["imagefile"]]
-    y= data["target"]
+    y= data["weapon_type"]
     
     # Convert list of images to numpy array with the correct shape
     #X_train_processed = np.array([np.array(x) for x in X])
     #X_train_processed = [np.expand_dims(x, axis=-1) for x in X]
 
     #print(f"X_train_processed: {X_train_processed}")
+
+    common_size = get_most_common_size(X)
 
     data_augmentation = tf.keras.Sequential([
         tf.keras.layers.RandomRotation(0.2),         # Random rotation (20 degrees)
@@ -81,6 +83,8 @@ def augment_images(data):
     X_aug = []
     y_aug = []
 
+    y_train_aug = pd.DataFrame(columns=y_processed_df.columns)
+
     # loop through the training set and augment the images
     for i in range(len(X)):
         # augment 10 more images for each image in the training set
@@ -88,7 +92,9 @@ def augment_images(data):
         #i = np.expand_dims(i, axis=0)  
         for j in range(1):
             print(f"Augmenting image {i} - {j}")
-            augmented_image = data_augmentation(X[i], training=True)[0].numpy()
+            augmented_image = process_image(X[i], common_size) 
+            augmented_image = data_augmentation(augmented_image, training=True)[0].numpy()
+
 
             # Resize the augmented image due to zooming
             #global target_size
@@ -96,31 +102,54 @@ def augment_images(data):
             print(f"augmented_image shape: {augmented_image.shape}")
 
             #X_train_aug.append(resized_image.numpy())
-            X_train_aug.append(augmented_image)
-            y_train_aug.append(y_train[i])
+            X_aug.append(augmented_image)
+            y_aug.append(y[i])
+        X_aug.append(process_image(X[i], common_size))
+        y_aug.append(y[i])
 
-    # Convert lists to numpy arrays
-    #X_train_aug = np.array(X_train_aug)
-    #y_train_aug = np.array(y_train_aug)
-        
-    return X_train_aug, y_train_aug
+    return X_aug, y_aug
+
+def process_frame(image):
+    # Preprocess the image to match the input format of your model
+    # This could include resizing, normalization, etc.
+    image = cv2.resize(image, (224, 224))  # Resize to the model's input size
+    image = np.expand_dims(image, axis=0)  # Add batch dimension
+    image = image / 255.0  # Normalize the image
+
+    # Make a prediction using the model
+    prediction = model.predict(image)
+
+    # Process the prediction (e.g., return the class with the highest probability)
+    predicted_class = np.argmax(prediction, axis=1)[0]
+
+    return predicted_class
 
 def one_hot_encode(y):
+    print(f"one_hot_encode y shape: {np.array(y).shape}")
+    print(f"one_hot_encode y: {y[0]}")
+
     encoder = OneHotEncoder(sparse_output=False)
-    y_encoded = encoder.fit_transform(y.values.reshape(-1, 1))
+    #y_encoded = encoder.fit_transform(y.values.reshape(-1, 1))
+    y_encoded = encoder.fit_transform(np.array(y).reshape(-1, 1))
     columns = encoder.get_feature_names_out(["weapon_type"])
     y = pd.DataFrame(y_encoded, columns=columns)
-    print(f"y shape: {y.shape}")
+    print(f"one hot encoded y shape result: {y.shape}")
     return y, encoder
 
 
 def train_model(X, y):
 
+    print(f"X: {X}")
+    X = np.array(X)
+    print(f"X type: {X.type}")
+    print(f"y type: {y.type}")
+
     # Convert list of images to numpy array with the correct shape
-    X = np.array([np.array(x) for x in X])
+    X = [np.array(x) for x in X]
     y = np.array(y.values)
 
-    print(f"y shape training: {y.shape}")
+    print(f"X shape: {X.shape}")
+    print(f"y shape: {y.shape}")
     #for img in X.values:
     #    print(f"img shape: {img.shape}")
     #print(f"X type: {type(X)}")
@@ -186,9 +215,11 @@ if __name__ == '__main__':
     # Preprocess the data to gather labels and process image data
     data = preprocess_data(data)
 
+    # One hot encode the labels
+    y, encoder = one_hot_encode(data['weapon_type'])
+
     # Augment more images from existing images
     X, y = augment_images(data)
-    y, encoder = one_hot_encode(data["weapon_type"])
 
 #    print(f"X_train_aug: {X_train_aug}")
     # Concatenate the original and augmented images
@@ -201,7 +232,7 @@ if __name__ == '__main__':
 #    print(f"y: {y}")
 
     # Train the model
-    model = train_model(data["image"], y)
+    model = train_model(X, y)
 
     #gr.Interface(fn=gradio_input_fn, inputs=gr.Image(label="Image", type="pil"), outputs=gr.Textbox(label="Weapon Type")).launch()
 
