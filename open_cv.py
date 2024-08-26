@@ -3,6 +3,7 @@ import numpy as np
 import time
 import pickle
 from PIL import Image
+import gradio as gr
 
 l = ['Automatic Rifle', 'Bazooka', 'Grenade Launcher', 'Handgun', 'Knife', 'Shotgun', 'SMG', 'Sniper', 'Sword']
 
@@ -30,25 +31,30 @@ def vid_predict(model, target_size, labels):
         
         return output_message
 
-    cam = cv2.VideoCapture(0)
-    last_recorded_time = time.time() # this keeps track of the last time a frame was processed
-    while True:
-        curr_time = time.time() # grab the current time
-
-        _, img = cam.read()
-
-        cv2.imshow('img', img)
-
-        if curr_time - last_recorded_time >= 2.0:
-            # it has been at least 2 seconds
+    def vid_inf():
+        cam = cv2.VideoCapture(0)
+        while True:
+            _, img = cam.read()
+            cv2.imshow('img', img)
             color_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            print(run_model(Image.fromarray(color_img)))
-            last_recorded_time = curr_time
+            result = run_model(Image.fromarray(color_img))
+            yield result
+            # it has been at least 2 seconds
+            time.sleep(2)
+            k = cv2.waitKey(30) & 0xff
+            if k == 27:
+                break
 
+        cam.release()
+        cv2.destroyAllWindows()
 
-        k = cv2.waitKey(30) & 0xff
-        if k == 27:
-            break
+    demo = gr.Interface(
+        fn=vid_inf,
+        inputs=None,
+        outputs=[gr.Textbox()]
+    )
+
+    demo.launch()
 
 if __name__ == '__main__':
     print(pickle.format_version)
