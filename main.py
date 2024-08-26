@@ -10,6 +10,7 @@ from sklearn.preprocessing import OneHotEncoder
 import os
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import pickle
+from sklearn.preprocessing import MultiLabelBinarizer
 
 
 def preprocess_data(data):
@@ -109,11 +110,12 @@ def train_model(X, y, encoder):
         tf.keras.layers.Conv2D(64, (3, 3), activation='relu'),
         tf.keras.layers.Flatten(),
         tf.keras.layers.Dense(64, activation='relu'),
-        tf.keras.layers.Dense(len(encoder.categories_[0]), activation='softmax')
+        tf.keras.layers.Dense(len(encoder.categories_[0]), activation='sigmoid')
+        #tf.keras.layers.Dense(len(encoder.classes_), activation='sigmoid')
     ])
 
     model.compile(optimizer='adam',
-                  loss='categorical_crossentropy',
+                  loss='binary_crossentropy',
                   metrics=['accuracy'])
 
     model.fit(X_train, y_train, epochs=10, batch_size=32, validation_data=(X_test, y_test))
@@ -131,10 +133,18 @@ def gradio_input_fn(image, encoder, model):
     image = image.reshape((1, 128, 128, 3))
     image = image / 255.0
     predictions = model.predict(image)
-    prediction = encoder.inverse_transform(predictions)[0][0]
-    confidence_score = predictions[0][np.argmax(predictions)]
-    print(f"Prediction: {prediction} with an accuracy of {confidence_score}")
-    return f"{prediction} with an accuracy of {confidence_score}"
+
+    if type(encoder) == MultiLabelBinarizer:
+        predictions_binary = (predictions > 0.5).astype(int)
+        predictions_labels = encoder.inverse_transform(predictions_binary)
+
+        print(f"Predicted Weapon Types: {predictions_labels}")
+        return f"Predicted Weapon Types: {predictions_labels}"
+    else:
+        prediction = encoder.inverse_transform(predictions)[0][0]
+        confidence_score = predictions[0][np.argmax(predictions)]
+        print(f"Prediction: {prediction} with an accuracy of {confidence_score}")
+        return f"{prediction} with an accuracy of {confidence_score}"
 
 def load_images(image_paths):
     images = [process_image(open_image(image_path)) for image_path in image_paths]
@@ -148,6 +158,14 @@ def load_images(image_paths):
 def build_encoder(y):
     encoder = OneHotEncoder(sparse_output=False)
     y_encoded = encoder.fit_transform(y.values.reshape(-1, 1))
+    with open('./Resources/encoder.pkl', 'wb') as f:
+        pickle.dump(encoder, f)
+    return y_encoded, encoder
+
+def multi_label_binarizer(y):
+    y_list_of_lists = [[label] for label in y]
+    encoder = MultiLabelBinarizer()
+    y_encoded = encoder.fit_transform(y_list_of_lists)
     with open('./Resources/encoder.pkl', 'wb') as f:
         pickle.dump(encoder, f)
     return y_encoded, encoder
@@ -172,8 +190,9 @@ if __name__ == '__main__':
         
         images = load_images(data["imagefile"])
         y_encoded, encoder = build_encoder(data["weapon_type"])
+        #y_encoded, encoder = multi_label_binarizer(data["weapon_type"])
 
-        images, labels = augment_images(images, y_encoded, 50)
+        images, labels = augment_images(images, y_encoded, 2)
 
         # Train the model
         model = train_model(images, labels, encoder)
