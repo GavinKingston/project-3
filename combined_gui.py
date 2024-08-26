@@ -87,7 +87,7 @@ Args:
                 second_weapon = labels[second_max_idx]
 
                 if max_val > 0.7:
-                    return f"No weapon detected in the image\nThe image could contain a weapon type of {first_weapon} with a confidence of {'{:,.2%}'.format(max_val)} out of the given weapon types. if there is a weapon at all."
+                    return f"No weapon detected in the image\nThe image could contain a weapon type of {first_weapon} with a confidence of {'{:,.2%}'.format(max_val)} out of the given weapon types. if there is a weapon"
                 if second_max_val > 0.1:
                     return f"No weapon detected in the image\nThe image could contain a {first_weapon} with a confidence of {'{:,.2%}'.format(max_val)}. The image could also be a {second_weapon} with a confidence of {'{:,.2%}'.format(second_max_val)}"
             else:
