@@ -1,11 +1,8 @@
 tensorflow 
 numpy 
 gradio 
-PIL
-pickle
-time
-cv2
-sklearn
-operator
+pillow
+opencv-python
+scikit-learn
 pandas
 datetime
