@@ -22,7 +22,7 @@ theme = gr.themes.Soft(
 
 # initiate gradio with theme
 
-with gr.Blocks(theme=theme) as demo:
+with gr.Blocks(theme='HaleyCH/HaleyCH_Theme') as demo:
     ...
 def predict(model, target_size):
     """
@@ -85,7 +85,7 @@ Args:
                 second_weapon = labels[second_max_idx]
 
                 if max_val > 0.7:
-                    return f"No weapon detected in the image\nThe image could contain a {first_weapon} with a confidence of {'{:,.2%}'.format(max_val)}."
+                    return f"No weapon detected in the image\nThe image could contain a weapon type of {first_weapon} with a confidence of {'{:,.2%}'.format(max_val)} out of the given weapon types. if there is a weapon at all."
                 if second_max_val > 0.1:
                     return f"No weapon detected in the image\nThe image could contain a {first_weapon} with a confidence of {'{:,.2%}'.format(max_val)}. The image could also be a {second_weapon} with a confidence of {'{:,.2%}'.format(second_max_val)}"
             else:
@@ -95,10 +95,10 @@ Args:
                         gr.Image(type="pil"),
                         
                         gr.Textbox())
-    demo.launch()
+    demo.launch(share=True)
     
-#with gr.Blocks(theme=theme) as demo:
-#    ...
+with gr.Blocks(theme=theme) as demo:
+    ...
 def vid_predict(model, target_size):
 
     def run_model(img):
@@ -140,7 +140,7 @@ def vid_predict(model, target_size):
 
         _, img = cam.read()
 
-        #cv2.imshow('img', img)
+        cv2.imshow('img', img)
 
         if curr_time - last_recorded_time >= 2.0:
             # it has been at least 2 seconds
@@ -151,9 +151,11 @@ def vid_predict(model, target_size):
 
         k = cv2.waitKey(30) & 0xff
         if k == 27:
+            
             break
-#    demo_2 = gr.Interface(run_model,
-#                        gr.Image(type="pil"),
-#                        
-#                        gr.Textbox())
-#    demo_2.launch()
+        
+    demo_2 = gr.Interface(run_model,
+                        cv2.imshow('img', img),
+                        gr.Textbox()
+                        )
+    demo_2.launch()
