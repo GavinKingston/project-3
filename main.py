@@ -148,11 +148,6 @@ def gradio_input_fn(image, encoder, model):
 
 def load_images(image_paths):
     images = [process_image(open_image(image_path)) for image_path in image_paths]
-    #image_paths = image_paths.apply(lambda x: os.path.join('./Resources/weapon_detection/train/images/', x))
-    #images = []
-    #for img_path in image_paths:
-    #    img = process_image(Image.open(img_path))
-    #    images.append(img)
     return np.array(images)
 
 def build_encoder(y):
@@ -192,7 +187,7 @@ if __name__ == '__main__':
         y_encoded, encoder = build_encoder(data["weapon_type"])
         #y_encoded, encoder = multi_label_binarizer(data["weapon_type"])
 
-        images, labels = augment_images(images, y_encoded, 2)
+        images, labels = augment_images(images, y_encoded, 100)
 
         # Train the model
         model = train_model(images, labels, encoder)
