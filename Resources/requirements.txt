@@ -1,8 +1,0 @@
-tensorflow 
-numpy 
-gradio 
-pillow
-opencv-python
-scikit-learn
-pandas
-datetime

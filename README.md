@@ -51,29 +51,40 @@ The trained model was serialized and saved as a pickle file (binary_model.pkl). 
 ![Epoch Loss](https://github.com/GavinKingston/project-3/blob/Major/presentation%20images/epoch_loss.png)
 
 # Instructions
-1. Install the requirements
+1. Install the requirements using the following command
 
-2. Run main.ipynb file
+    ```pip install -r requirements.txt```
+
+2. Run main.ipynb jupyter file to get the gradio  interface to detect a weapon in a uploaded image, Also can do the video feed from a webcam **(Nicholas's version)**. 
+
+    or run ```python main.py``` to get the live video stream from a webcam **(Gavin's version)**
 
 3. Upload image when prompted
+  
+    If running the live video stream just pass a weapon object into the video frame and it will predict which weapon type is in the video. We plan to implement the "no weapon" detection into the video stream at a later date, we ran out of time to implement the other images in the video stream. 
 
 
 # Requirements
-tensorflow 
 
-numpy 
+* pandas
 
-gradio 
+* gradio
 
-pillow
+* scikit-learn
 
-opencv-python
+* keras
 
-scikit-learn
+* tensorflow
 
-pandas
+* numpy
 
-datetime
+* pillow
+
+* opencv-python
+
+* pandas
+
+* datetime
 
 # License
 

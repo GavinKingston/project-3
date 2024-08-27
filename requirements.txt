@@ -1,0 +1,10 @@
+pandas
+gradio
+scikit-learn
+keras
+tensorflow
+numpy
+pillow
+opencv-python
+pandas
+datetime
