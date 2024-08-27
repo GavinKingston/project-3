@@ -202,7 +202,7 @@ def opencv(model, encoder):
 
 if __name__ == '__main__':
 
-    if not os.path.exists('./Resources/weapon_detection_model.keras') or not os.path.exists('./Resources/encoder.pkl'):
+    if not os.path.exists('./models/weapon_detection_model.keras') or not os.path.exists('./models/encoder.pkl'):
         print("Model or Encoder not found. Training model and encoder...")
 
         # Load the data
