@@ -7,7 +7,7 @@ import time
 import cv2
 
 # Load weapon classification model
-model_2 = tf.keras.models.load_model('./models/pew_pew_pew_model.keras')#pickle.load(file)  
+model_2 = tf.keras.models.load_model('./models/pew_pew_pew_model_2.keras')#pickle.load(file)  
 
 # Set weapon_list binary
 weapon_list = [1,0]
@@ -63,12 +63,12 @@ Args:
             first_weapon = labels[max_idx]
             second_weapon = labels[second_max_idx]
             
-            if max_val > 0.6:
+            if max_val > 0.48:
                 return f"The image contains a {first_weapon} with a confidence of {'{:,.2%}'.format(max_val)}."
-            if second_max_val > 0.3 and second_max_val < max_val:
+            if second_max_val > 0.3:# and second_max_val < max_val:
                 return f"The image could contain a {first_weapon} with a confidence of {'{:,.2%}'.format(max_val)}. The image could also be a {second_weapon} with a confidence of {'{:,.2%}'.format(second_max_val)}"
             else:
-                return f'Image contains no weapon \n the image could contain a {first_weapon} with a confidence of {"{:,.2%}".format(max_val)}.'
+                return f'The image could contain a {first_weapon}, but likely no weapon' #\n the image could contain a {first_weapon} with a confidence of {"{:,.2%}".format(max_val)}.'
         if weapon_name == 0:
             
             if max_val > 0.5:
@@ -83,12 +83,13 @@ Args:
                 second_weapon = labels[second_max_idx]
 
                 if max_val > 0.7:
-                    return f"No weapon detected in the image\nThe image could contain a weapon type of {first_weapon} with a confidence of {'{:,.2%}'.format(max_val)} out of the given weapon types. if there is a weapon"
-                if second_max_val > 0.1:
+                    return f"No weapon detected in the image\nThe image could contain a weapon type of {first_weapon} with a confidence of {'{:,.2%}'.format(max_val)} out of the given weapon types."
+                if second_max_val > 0.6:
                     return f"No weapon detected in the image\nThe image could contain a {first_weapon} with a confidence of {'{:,.2%}'.format(max_val)}. The image could also be a {second_weapon} with a confidence of {'{:,.2%}'.format(second_max_val)}"
+                else:
+                    return "No weapon detected in the image"
             else:
                 return "No weapon detected in the image"
-        
     demo = gr.Interface(run_model,
                         gr.Image(type="pil"),
                         
