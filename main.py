@@ -223,9 +223,7 @@ if __name__ == '__main__':
         model = load_model()
         encoder = load_encoder()
 
-        opencv(model, encoder)
-
-
+    opencv(model, encoder)
     gr.Interface(fn=lambda input_data: gradio_input_fn(input_data, encoder, model), inputs=gr.Image(label="Image", type="pil"), outputs=gr.Textbox(label="Weapon Type")).launch()
 
 #    model = train_model(data)
