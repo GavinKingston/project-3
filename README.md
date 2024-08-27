@@ -59,7 +59,9 @@ The trained model was serialized and saved as a pickle file (binary_model.pkl). 
 
 
 # Requirements
-tensorflow 
+tensorflow
+
+tensorboard
 
 numpy 
 
@@ -78,6 +80,9 @@ datetime
 # License
 
 [CCO: Public Domain](https://creativecommons.org/publicdomain/zero/1.0/)
+
+[GLU 2: General Public License](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
+
 
 
 
