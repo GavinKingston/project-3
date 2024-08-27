@@ -127,12 +127,12 @@ def train_model(X, y, encoder):
 
     model.fit(X_train, y_train, epochs=10, batch_size=32, validation_data=(X_test, y_test))
 
-    model.save('./Resources/weapon_detection_model.keras')
+    model.save('./models/weapon_detection_model.keras')
     return model
 
 
 def load_model():
-    model = tf.keras.models.load_model('./Resources/weapon_detection_model.keras')
+    model = tf.keras.models.load_model('./models/weapon_detection_model.keras')
     return model
 
 def gradio_input_fn(image, encoder, model):
@@ -160,7 +160,7 @@ def load_images(image_paths):
 def build_encoder(y):
     encoder = OneHotEncoder(sparse_output=False)
     y_encoded = encoder.fit_transform(y.values.reshape(-1, 1))
-    with open('./Resources/encoder.pkl', 'wb') as f:
+    with open('./models/encoder.pkl', 'wb') as f:
         pickle.dump(encoder, f)
     return y_encoded, encoder
 
@@ -168,14 +168,14 @@ def multi_label_binarizer(y):
     y_list_of_lists = [[label] for label in y]
     encoder = MultiLabelBinarizer()
     y_encoded = encoder.fit_transform(y_list_of_lists)
-    with open('./Resources/encoder.pkl', 'wb') as f:
+    with open('./models/encoder.pkl', 'wb') as f:
         pickle.dump(encoder, f)
     return y_encoded, encoder
 
 def load_encoder():
-    if not os.path.exists('./Resources/encoder.pkl'):
+    if not os.path.exists('./models/encoder.pkl'):
         return None
-    with open('./Resources/encoder.pkl', 'rb') as f:
+    with open('./models/encoder.pkl', 'rb') as f:
         encoder = pickle.load(f)
     return encoder
 
