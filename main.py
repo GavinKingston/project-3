@@ -11,6 +11,8 @@ import os
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import pickle
 from sklearn.preprocessing import MultiLabelBinarizer
+import cv2
+import time
 
 
 def preprocess_data(data):
@@ -80,18 +82,23 @@ def augment_images(images, labels, n_augmentations=10):
 
     return augmented_images, augmented_labels
 
-def process_frame(image):
+def process_frame(image, model, encoder):
     # Preprocess the image to match the input format of your model
     # This could include resizing, normalization, etc.
-    image = cv2.resize(image, (224, 224))  # Resize to the model's input size
-    image = np.expand_dims(image, axis=0)  # Add batch dimension
+    image = process_image(image)
+    image = image.reshape((1, 128, 128, 3))
     image = image / 255.0  # Normalize the image
 
     # Make a prediction using the model
-    prediction = model.predict(image)
+    predictions = model.predict(image)
 
     # Process the prediction (e.g., return the class with the highest probability)
-    predicted_class = np.argmax(prediction, axis=1)[0]
+    #predicted_class = np.argmax(prediction, axis=1)[0]
+
+    prediction = encoder.inverse_transform(predictions)[0][0]
+    confidence_score = predictions[0][np.argmax(predictions)]
+    print(f"Prediction: {prediction} with an accuracy of {confidence_score}")
+    return f"{prediction} with an accuracy of {confidence_score}"
 
     return predicted_class
 
@@ -172,6 +179,27 @@ def load_encoder():
         encoder = pickle.load(f)
     return encoder
 
+def opencv(model, encoder):
+    cam = cv2.VideoCapture(0)
+    last_recorded_time = time.time() # this keeps track of the last time a frame was processed
+    while True:
+        curr_time = time.time() # grab the current time
+
+        _, img = cam.read()
+
+        cv2.imshow('img', img)
+
+        if curr_time - last_recorded_time >= 2.0:
+            # it has been at least 2 seconds
+            color_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            print(process_frame(Image.fromarray(color_img), model, encoder))
+            last_recorded_time = curr_time
+
+
+        k = cv2.waitKey(30) & 0xff
+        if k == 27:
+            break
+
 if __name__ == '__main__':
 
     if not os.path.exists('./Resources/weapon_detection_model.keras') or not os.path.exists('./Resources/encoder.pkl'):
@@ -194,6 +222,8 @@ if __name__ == '__main__':
     else:
         model = load_model()
         encoder = load_encoder()
+
+        opencv(model, encoder)
 
 
     gr.Interface(fn=lambda input_data: gradio_input_fn(input_data, encoder, model), inputs=gr.Image(label="Image", type="pil"), outputs=gr.Textbox(label="Weapon Type")).launch()
