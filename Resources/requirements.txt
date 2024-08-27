@@ -6,3 +6,4 @@ opencv-python
 scikit-learn
 pandas
 datetime
+tensorboard
