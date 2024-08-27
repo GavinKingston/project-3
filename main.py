@@ -84,7 +84,6 @@ def augment_images(images, labels, n_augmentations=10):
 
 def process_frame(image, model, encoder):
     # Preprocess the image to match the input format of your model
-    # This could include resizing, normalization, etc.
     image = process_image(image)
     image = image.reshape((1, 128, 128, 3))
     image = image / 255.0  # Normalize the image
@@ -92,23 +91,26 @@ def process_frame(image, model, encoder):
     # Make a prediction using the model
     predictions = model.predict(image)
 
-    # Process the prediction (e.g., return the class with the highest probability)
-    #predicted_class = np.argmax(prediction, axis=1)[0]
-
+    # Decode the predictions using the encoder
     prediction = encoder.inverse_transform(predictions)[0][0]
+
+    # Get the confidence score for the prediction
     confidence_score = predictions[0][np.argmax(predictions)]
+
+    # Print the prediction and confidence score
     print(f"Prediction: {prediction} with an accuracy of {confidence_score}")
     return f"{prediction} with an accuracy of {confidence_score}"
 
-    return predicted_class
-
 def train_model(X, y, encoder):
 
+    # Split the data into training and testing sets
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
+    # Normalize the image data
     X_train = X_train / 255.0
     X_test = X_test / 255.0
 
+    # Create a convolutional neural network model
     model = tf.keras.Sequential([
         tf.keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=X_train[0].shape),
         tf.keras.layers.MaxPooling2D((2, 2)),
@@ -118,15 +120,17 @@ def train_model(X, y, encoder):
         tf.keras.layers.Flatten(),
         tf.keras.layers.Dense(64, activation='relu'),
         tf.keras.layers.Dense(len(encoder.categories_[0]), activation='sigmoid')
-        #tf.keras.layers.Dense(len(encoder.classes_), activation='sigmoid')
     ])
 
+    # Compile the model
     model.compile(optimizer='adam',
                   loss='binary_crossentropy',
                   metrics=['accuracy'])
 
+    # Train the model
     model.fit(X_train, y_train, epochs=10, batch_size=32, validation_data=(X_test, y_test))
 
+    # Save the model
     model.save('./models/weapon_detection_model.keras')
     return model
 
@@ -136,9 +140,12 @@ def load_model():
     return model
 
 def gradio_input_fn(image, encoder, model):
+    # Preprocess the image to match the input format of the model
     image = process_image(image)
     image = image.reshape((1, 128, 128, 3))
-    image = image / 255.0
+    image = image / 255.0 # Normalize the image
+
+    # Make a prediction using the model
     predictions = model.predict(image)
 
     if type(encoder) == MultiLabelBinarizer:
@@ -212,22 +219,23 @@ if __name__ == '__main__':
         data = preprocess_data(data)
         
         images = load_images(data["imagefile"])
-        y_encoded, encoder = build_encoder(data["weapon_type"])
-        #y_encoded, encoder = multi_label_binarizer(data["weapon_type"])
 
+        # Encode the labels and save the encoder
+        y_encoded, encoder = build_encoder(data["weapon_type"])
+
+        # Augment the images and concatenate the augmented images and labels with the original images and labels
         images, labels = augment_images(images, y_encoded, 100)
 
         # Train the model
         model = train_model(images, labels, encoder)
     else:
+
+        # Load the model and encoder
         model = load_model()
         encoder = load_encoder()
 
+    # comment out the following line to run the gradio interface and uncomment the line below it
     opencv(model, encoder)
-    gr.Interface(fn=lambda input_data: gradio_input_fn(input_data, encoder, model), inputs=gr.Image(label="Image", type="pil"), outputs=gr.Textbox(label="Weapon Type")).launch()
 
-#    model = train_model(data)
-
-#    print(data.head(10))
-
-#    data = preprocess_data(data)```
+    # uncomment the following line to run the gradio interface
+    #gr.Interface(fn=lambda input_data: gradio_input_fn(input_data, encoder, model), inputs=gr.Image(label="Image", type="pil"), outputs=gr.Textbox(label="Weapon Type")).launch()
