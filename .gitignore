@@ -160,3 +160,9 @@ cython_debug/
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
+<<<<<<< HEAD
+=======
+#
+
+# model and encoder shouldnt be committed to the repo, it should be hosted on a model registry or an S3 bucket due to its size and it being a binary file type
+>>>>>>> c9f371ae9e07d9ce99bca268f0faaee3fe037f84
