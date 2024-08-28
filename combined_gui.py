@@ -63,38 +63,38 @@ Args:
             first_weapon = labels[max_idx]
             second_weapon = labels[second_max_idx]
             
-            if max_val > 0.48:
-                return f"The image contains a {first_weapon} with a confidence of {'{:,.2%}'.format(max_val)}."
-            if second_max_val > 0.3:# and second_max_val < max_val:
-                return f"The image could contain a {first_weapon} with a confidence of {'{:,.2%}'.format(max_val)}. The image could also be a {second_weapon} with a confidence of {'{:,.2%}'.format(second_max_val)}"
-            else:
-                return f'The image could contain a {first_weapon}, but likely no weapon' #\n the image could contain a {first_weapon} with a confidence of {"{:,.2%}".format(max_val)}.'
+            #if max_val > 0.8:
+            #    return f"The image contains a {first_weapon} with a confidence of {'{:,.2%}'.format(max_val)}."
+            #if second_max_val > 0.6:# and second_max_val < max_val:
+            #    return f"The image could contain a {first_weapon} with a confidence of {'{:,.2%}'.format(max_val)}. The image could also be a {second_weapon} with a confidence of {'{:,.2%}'.format(second_max_val)}"
+            #else:
+            return f"The image contains a {first_weapon} with a confidence of {'{:,.2%}'.format(max_val)}."
         if weapon_name == 0:
             
-            if max_val > 0.5:
-                labels = ['Automatic Rifle', 'Bazooka', 'Grenade Launcher', 'Handgun', 'Knife', 'Shotgun', 'SMG', 'Sniper', 'Sword']
-                prediction = model_2.predict(expanded_img)
-                pred_copy = prediction[0].copy()
-                max_val = np.sort(pred_copy)[-1]
-                second_max_val = np.sort(pred_copy)[-2]
-                max_idx = np.where(pred_copy == max_val)[0][0]
-                second_max_idx = np.where(pred_copy == second_max_val)[0][0]
-                first_weapon = labels[max_idx]
-                second_weapon = labels[second_max_idx]
-
-                if max_val > 0.7:
-                    return f"No weapon detected in the image\nThe image could contain a weapon type of {first_weapon} with a confidence of {'{:,.2%}'.format(max_val)} out of the given weapon types."
-                if second_max_val > 0.6:
-                    return f"No weapon detected in the image\nThe image could contain a {first_weapon} with a confidence of {'{:,.2%}'.format(max_val)}. The image could also be a {second_weapon} with a confidence of {'{:,.2%}'.format(second_max_val)}"
-                else:
-                    return "No weapon detected in the image"
-            else:
+            #if max_val > 0.7:
+            #    labels = ['Automatic Rifle', 'Bazooka', 'Grenade Launcher', 'Handgun', 'Knife', 'Shotgun', 'SMG', 'Sniper', 'Sword']
+            #    prediction = model_2.predict(expanded_img)
+            #    pred_copy = prediction[0].copy()
+            #    max_val = np.sort(pred_copy)[-1]
+            #    second_max_val = np.sort(pred_copy)[-2]
+            #    max_idx = np.where(pred_copy == max_val)[0][0]
+            #    second_max_idx = np.where(pred_copy == second_max_val)[0][0]
+            #    first_weapon = labels[max_idx]
+            #    second_weapon = labels[second_max_idx]
+#
+            #    if max_val > 0.8:
+            #        return f"No weapon detected in the image\nThe image could contain a weapon type of {first_weapon} with a confidence of {'{:,.2%}'.format(max_val)} out of the given weapon types."
+            #    if second_max_val > 0.6:
+            #        return f"No weapon detected in the image\nThe image could contain a {first_weapon} with a confidence of {'{:,.2%}'.format(max_val)}. The image could also be a {second_weapon} with a confidence of {'{:,.2%}'.format(second_max_val)}"
+            #    else:
+            #        return "No weapon detected in the image"
+            #else:
                 return "No weapon detected in the image"
     demo = gr.Interface(run_model,
                         gr.Image(type="pil"),
                         
                         gr.Textbox())
-    demo.launch(share=True)
+    demo.launch()
     
 #with gr.Blocks(theme=theme) as demo:
 #    ...
@@ -177,8 +177,8 @@ def vid_predict(model, target_size):
         if k == 27:
             break
 
-#    demo_2 = gr.Interface(run_model,
-#                        cv2.imshow('img', img),
-#                        gr.Textbox()
-#                        )
-#    demo_2.launch()
+    demo_2 = gr.Interface(run_model,
+                        cv2.imshow('img', img),
+                        gr.Textbox()
+                        )
+    demo_2.launch()
